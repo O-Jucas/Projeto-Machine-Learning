@@ -1,0 +1,1 @@
+$PYTHON_DIFERENTE run.py ~/Repositories/dbclima/ufrj/2026_1/Aprendizado_de_Maquina/trabalho_final/archive/master_doodle_dataframe.csv ~/Repositories/dbclima/ufrj/2026_1/Aprendizado_de_Maquina/trabalho_final/archive/doodle ./words_to_keep.json
