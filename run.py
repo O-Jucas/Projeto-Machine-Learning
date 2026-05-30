@@ -10,6 +10,8 @@ from pathlib import Path
 from image_manipulation import load_images
 from training import encode_labels, create_cnn_model_1, create_cnn_model_2, create_cnn_model_3, training
 
+import pickle
+from time import time_ns
 
 def main():
 
@@ -53,12 +55,29 @@ def main():
 
     # Treina modelo e apresenta resultados
     print("Treinando, bip bop")
+
+    inicio = time_ns()
     training(model1, X_train, y_train, X_validate, y_validate)
+    fim = time_ns()
+    print("Modelo 1 ->", fim - inicio)
     training(model2, X_train, y_train, X_validate, y_validate)
+    fim2 = time_ns()
+    print("Modelo 2 ->", fim2 - fim)
     training(model3, X_train, y_train, X_validate, y_validate)
+    fim3 = time_ns()
+    print("Modelo 3 ->", fim3 - fim2)
     print("Fim treino, zip zup")
 
+    print("Tempo total ->", fim3 - inicio)
 
+    caminho_output = Path("./output")
+    assert caminho_output.exists()
+
+    modelos = [model1, model2, model3]
+
+    for i in range(3):
+        with open(caminho_output / f"modelo{i + 1}", "wb") as pkl:
+            pickle.dump(modelos[i], pkl)
 
 
 if __name__ == "__main__":
