@@ -45,14 +45,21 @@ def plotar_piores_confusoes(y_verdadeiro, y_previsto, nomes_das_classes, top_n=1
 # ---------------------------------------------------------
 def main():
     # 1. Carregar as mesmas palavras e dados usados no treino
-    with open("words_to_keep.json", "r") as js:
+    with open("../arquivos machine learning/words_to_keep.json", "r") as js:
         words_to_keep = json.load(js)
         
-    df = pd.read_csv("caminho_para_seu_dataset.csv") # Atualize o caminho
-    df_filtrado = df[df['word'].isin(words_to_keep)]
-    
+    df = pd.read_csv("../arquivos machine learning/master_doodle_dataframe.csv")
+    df_filtrado = df[df['word'].isin(words_to_keep)].copy()
+    df_filtrado['image_path_normalizado'] = df_filtrado['image_path'].str.replace(r'^data/', '', regex=True)
+
+    caminho_imagens = "../arquivos machine learning/doodle"
+
+    # Filtra apenas categorias cujas pastas existem no disco (igual ao run.py)
+    words_to_keep = [w for w in words_to_keep if (Path(caminho_imagens) / w).exists()]
+    df_filtrado = df_filtrado[df_filtrado['word'].isin(words_to_keep)]
+
     print("Carregando imagens para teste...")
-    image_array = load_images(df_filtrado['image_path'].values, base_path="pasta_imagens", target_size=(64, 64))
+    image_array = load_images(df_filtrado['image_path_normalizado'].values, base_path=caminho_imagens, target_size=(64, 64))
     
     # 2. Recriar os tensores de teste
     _, X_validate, _, y_validate = encode_labels(df_filtrado['word'].values, image_array, words_to_keep)
