@@ -2,7 +2,7 @@ import json
 import pandas as pd
 
 import matplotlib
-matplotlib.use("QtAgg")
+matplotlib.use("Agg")
 
 from sys import argv, exit
 from pathlib import Path
@@ -12,6 +12,8 @@ from training import encode_labels, create_cnn_model_1, create_cnn_model_2, crea
 
 import pickle
 from time import time_ns
+
+modelo_treinado = 1
 
 def main():
 
@@ -40,44 +42,80 @@ def main():
     assert len(words_to_keep) > 0, "lista words_to_keep é vazio"
 
     df = pd.read_csv(caminho_dataset)
-    df_filtrado = df[df['word'].isin(words_to_keep)]
+    df_filtrado = df[df['word'].isin(words_to_keep)].copy()
 
-    # df_filtrado["image_path_corrigido"] = df_filtrado["image_path"]
-    image_array = load_images(df_filtrado['image_path'].values, base_path=str(caminho_pasta_imagens), target_size=(64, 64))
+    # Remove do path o prefixo 'data/' que o CSV armazena mas não existe no disco
+    df_filtrado['image_path_normalizado'] = df_filtrado['image_path'].str.replace(r'^data/', '', regex=True)
+
+    # Filtra apenas categorias cujas pastas existem no disco
+    words_to_keep = [w for w in words_to_keep if (caminho_pasta_imagens / w).exists()]
+    df_filtrado = df_filtrado[df_filtrado['word'].isin(words_to_keep)]
+    print(f"Categorias disponíveis no disco ({len(words_to_keep)}): {words_to_keep}")
+
+    assert len(words_to_keep) > 0, "Nenhuma categoria do words_to_keep possui pasta no disco"
+
+    image_array = load_images(df_filtrado['image_path_normalizado'].values, base_path=str(caminho_pasta_imagens), target_size=(64, 64))
 
     # Cria as colunas target numéricas com base no target string
     X_train, X_validate, y_train, y_validate = encode_labels(df_filtrado['word'].values, image_array, words_to_keep)
 
-    # Cria modelo CNN
-    model1 = create_cnn_model_1(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
-    model2 = create_cnn_model_2(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
-    model3 = create_cnn_model_3(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
+    if modelo_treinado != None:
+        inicio = time_ns()
+        if modelo_treinado == 1:
+            model1 = create_cnn_model_1(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
 
-    # Treina modelo e apresenta resultados
-    print("Treinando, bip bop")
+            training(model1, X_train, y_train, X_validate, y_validate)
 
-    inicio = time_ns()
-    training(model1, X_train, y_train, X_validate, y_validate)
-    fim = time_ns()
-    print("Modelo 1 ->", fim - inicio)
-    training(model2, X_train, y_train, X_validate, y_validate)
-    fim2 = time_ns()
-    print("Modelo 2 ->", fim2 - fim)
-    training(model3, X_train, y_train, X_validate, y_validate)
-    fim3 = time_ns()
-    print("Modelo 3 ->", fim3 - fim2)
-    print("Fim treino, zip zup")
+        elif modelo_treinado == 2:
+            model2 = create_cnn_model_2(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
 
-    print("Tempo total ->", fim3 - inicio)
+            training(model2, X_train, y_train, X_validate, y_validate)
 
-    caminho_output = Path("./output")
-    assert caminho_output.exists()
+        elif modelo_treinado == 3:
+            model3 = create_cnn_model_3(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
 
-    modelos = [model1, model2, model3]
+            training(model3, X_train, y_train, X_validate, y_validate)
+            
+        fim = time_ns()
+        print(f"Modelo {modelo_treinado} ->", fim - inicio)
 
-    for i in range(3):
-        with open(caminho_output / f"modelo{i + 1}", "wb") as pkl:
-            pickle.dump(modelos[i], pkl)
+        caminho_output = Path("./output")
+        caminho_output.mkdir(exist_ok=True)
+
+        model = model1 if modelo_treinado == 1 else model2 if modelo_treinado == 2 else model3
+        with open(caminho_output / f"modelo{modelo_treinado}", "wb") as pkl:
+            pickle.dump(model, pkl)
+    else:
+        # Cria modelo CNN
+        model1 = create_cnn_model_1(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
+        model2 = create_cnn_model_2(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
+        model3 = create_cnn_model_3(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
+
+        # Treina modelo e apresenta resultados
+        print("Treinando, bip bop")
+
+        inicio = time_ns()
+        training(model1, X_train, y_train, X_validate, y_validate)
+        fim = time_ns()
+        print("Modelo 1 ->", fim - inicio)
+        training(model2, X_train, y_train, X_validate, y_validate)
+        fim2 = time_ns()
+        print("Modelo 2 ->", fim2 - fim)
+        training(model3, X_train, y_train, X_validate, y_validate)
+        fim3 = time_ns()
+        print("Modelo 3 ->", fim3 - fim2)
+        print("Fim treino, zip zup")
+
+        print("Tempo total ->", fim3 - inicio)
+
+        caminho_output = Path("./output")
+        caminho_output.mkdir(exist_ok=True)
+
+        modelos = [model1, model2, model3]
+
+        for i in range(3):
+            with open(caminho_output / f"modelo{i + 1}", "wb") as pkl:
+                pickle.dump(modelos[i], pkl)
 
 
 if __name__ == "__main__":

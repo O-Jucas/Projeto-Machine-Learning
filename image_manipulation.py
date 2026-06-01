@@ -9,7 +9,8 @@ def load_images(image_paths: str, base_path: str, target_size=(64, 64)):
     images = []
     for file_path in image_paths:
         full_path = base_path + "/" + file_path
-        img = cv.imread(full_path, cv.IMREAD_GRAYSCALE)  # Load as grayscale
+        raw = np.fromfile(full_path, dtype=np.uint8)
+        img = cv.imdecode(raw, cv.IMREAD_GRAYSCALE)  # Load as grayscale (suporta paths Unicode)
         if img is not None:
             img = cv.resize(img, target_size)  # Resize the image to 64x64 pixels
             img = img / 255.0  # Normalize pixel values to [0, 1]
