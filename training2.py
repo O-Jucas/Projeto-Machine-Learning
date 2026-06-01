@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -41,11 +42,11 @@ def create_cnn_model_1(input_shape, num_classes):
 
     model.add(layers.Flatten())
 
-    model.add(layers.Dense(2048, activation='relu'))
+    model.add(layers.Dense(1048, activation='relu'))
     model.add(layers.Dropout(0.3))
     model.add(layers.BatchNormalization())
 
-    model.add(layers.Dense(2048, activation='relu'))
+    model.add(layers.Dense(1048, activation='relu'))
     model.add(layers.Dropout(0.3))
     model.add(layers.BatchNormalization())
 
@@ -69,11 +70,11 @@ def create_cnn_model_2(input_shape, num_classes):
     model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Flatten())
 
-    model.add(layers.Dense(256, activation='relu'))
+    model.add(layers.Dense(128, activation='relu'))
     model.add(layers.Dropout(0.3))
     model.add(layers.BatchNormalization())
 
-    model.add(layers.Dense(256, activation='relu'))
+    model.add(layers.Dense(128, activation='relu'))
     model.add(layers.Dropout(0.3))
     model.add(layers.BatchNormalization())
 
@@ -135,7 +136,17 @@ def training(model, X_train, y_train, X_validate, y_validate):
     return history.history
 
 
-def analyze_training(history):
-    history_frame = pd.DataFrame(history.history)
-    history_frame.loc[:, ['loss', 'val_loss']].plot()
-    history_frame.loc[:, ['accuracy', 'val_accuracy']].plot()
+def analyze_training(history, caminho_output, modelo_num):
+    history_frame = pd.DataFrame(history)
+
+    fig, ax = plt.subplots()
+    history_frame.loc[:, ['loss', 'val_loss']].plot(ax=ax)
+    ax.set_title(f"Modelo {modelo_num} - Loss")
+    fig.savefig(caminho_output / f"modelo{modelo_num}_loss.png")
+    plt.close(fig)
+
+    fig, ax = plt.subplots()
+    history_frame.loc[:, ['accuracy', 'val_accuracy']].plot(ax=ax)
+    ax.set_title(f"Modelo {modelo_num} - Accuracy")
+    fig.savefig(caminho_output / f"modelo{modelo_num}_accuracy.png")
+    plt.close(fig)

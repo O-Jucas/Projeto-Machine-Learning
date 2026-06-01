@@ -7,12 +7,12 @@ matplotlib.use("Agg")
 from sys import argv, exit
 from pathlib import Path
 
-from image_manipulation import load_images
-from training import encode_labels, create_cnn_model_1, create_cnn_model_2, create_cnn_model_3, training
+from treatments.image_manipulation import load_images
+from training2 import encode_labels, create_cnn_model_1, create_cnn_model_2, create_cnn_model_3, training, analyze_training
 
 from time import time_ns
 
-modelo_treinado = 1
+modelo_treinado = 2
 
 def main():
 
@@ -83,10 +83,11 @@ def main():
         caminho_output = Path("./output")
         caminho_output.mkdir(exist_ok=True)
 
-        # Salva o modelo e o histórico
+        # Salva o modelo, o histórico e os gráficos
         model.save(caminho_output / f"modelo{modelo_treinado}.keras")
         with open(caminho_output / f"historico_modelo{modelo_treinado}.json", "w") as f:
             json.dump(hist, f)
+        analyze_training(hist, caminho_output, modelo_treinado)
             
     else:
         # Cria modelo CNN
@@ -123,6 +124,7 @@ def main():
             modelos[i].save(caminho_output / f"modelo{i + 1}.keras")
             with open(caminho_output / f"historico_modelo{i + 1}.json", "w") as f:
                 json.dump(historicos[i], f)
+            analyze_training(historicos[i], caminho_output, i + 1)
 
 if __name__ == "__main__":
     main()
