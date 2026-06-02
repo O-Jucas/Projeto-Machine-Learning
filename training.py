@@ -41,11 +41,11 @@ def create_cnn_model_1(input_shape, num_classes):
 
     model.add(layers.Flatten())
 
-    model.add(layers.Dense(2048, activation='relu'))
+    model.add(layers.Dense(512, activation='relu'))
     model.add(layers.Dropout(0.3))
     model.add(layers.BatchNormalization())
 
-    model.add(layers.Dense(2048, activation='relu'))
+    model.add(layers.Dense(512, activation='relu'))
     model.add(layers.Dropout(0.3))
     model.add(layers.BatchNormalization())
 

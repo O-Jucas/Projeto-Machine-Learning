@@ -7,10 +7,9 @@ matplotlib.use("Agg")
 from sys import argv, exit
 from pathlib import Path
 
-from image_manipulation import load_images
+from treatments.image_manipulation import load_images
 from training import encode_labels, create_cnn_model_1, create_cnn_model_2, create_cnn_model_3, training
 
-import pickle
 from time import time_ns
 
 modelo_treinado = 1
@@ -83,8 +82,9 @@ def main():
         caminho_output.mkdir(exist_ok=True)
 
         model = model1 if modelo_treinado == 1 else model2 if modelo_treinado == 2 else model3
-        with open(caminho_output / f"modelo{modelo_treinado}", "wb") as pkl:
-            pickle.dump(model, pkl)
+        model.save(caminho_output / f"modelo{modelo_treinado}.keras")
+        with open(caminho_output / f"classes_modelo{modelo_treinado}.json", "w") as f:
+            json.dump(sorted(words_to_keep), f)
     else:
         # Cria modelo CNN
         model1 = create_cnn_model_1(input_shape=(64, 64, 1), num_classes=len(words_to_keep))
@@ -113,9 +113,11 @@ def main():
 
         modelos = [model1, model2, model3]
 
+        classes_salvas = sorted(words_to_keep)
         for i in range(3):
-            with open(caminho_output / f"modelo{i + 1}", "wb") as pkl:
-                pickle.dump(modelos[i], pkl)
+            modelos[i].save(caminho_output / f"modelo{i + 1}.keras")
+            with open(caminho_output / f"classes_modelo{i + 1}.json", "w") as f:
+                json.dump(classes_salvas, f)
 
 
 if __name__ == "__main__":

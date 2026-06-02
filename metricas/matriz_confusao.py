@@ -8,7 +8,6 @@ from pathlib import Path
 # Importa as métricas do Scikit-Learn
 from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras.models import load_model
-import pickle # Caso ainda esteja usando o pickle
 
 # Importa as funções que você já criou no seu projeto
 from image_manipulation import load_images
@@ -66,9 +65,7 @@ def main():
     
     # 3. Carregar o Modelo 1 salvo
     print("Carregando o modelo...")
-    # Se usou model.save() -> model = load_model("output/modelo1.keras")
-    with open("output/modelo1", "rb") as pkl:
-        model = pickle.load(pkl)
+    model = load_model("output/modelo1.keras")
     
     # 4. A HORA DA VERDADE: Fazer as predições
     print("Gerando predições...")
