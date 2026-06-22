@@ -1,10 +1,14 @@
 import cv2 as cv
 import numpy as np
+
+import matplotlib
+
+matplotlib.use("QtAgg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def load_images(image_paths: str, base_path: str, target_size=(64, 64)):
+def load_images(image_paths: list[str], base_path: str, target_size=(64, 64)):
     # Função que carrega cada imagem do caminho fornecido, redimensiona para 64x64 pixels e normaliza os valores dos pixels para o intervalo [0, 1].
     images = []
     for file_path in image_paths:
@@ -15,6 +19,9 @@ def load_images(image_paths: str, base_path: str, target_size=(64, 64)):
             img = img / 255.0  # Normalize pixel values to [0, 1]
         else:
             img = np.zeros(target_size)  # If the image cannot be loaded, return a blank image
+
+        plt.imshow(img, cmap="grey")
+        plt.show()
         images.append(img)
     return np.array(images)
 

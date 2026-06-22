@@ -1,8 +1,2 @@
-import matplotlib
-matplotlib.use("QtAgg")
-
-import matplotlib.pyplot as plt
-
-
-plt.plot([0, 1], [0, 1])
-plt.show()
+import tensorflow as tf
+print(tf.config.list_physical_devices("GPU"))

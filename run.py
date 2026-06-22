@@ -10,7 +10,6 @@ from pathlib import Path
 from image_manipulation import load_images
 from training import encode_labels, create_cnn_model_1, create_cnn_model_2, create_cnn_model_3, training
 
-import pickle
 from time import time_ns
 
 def main():
@@ -66,6 +65,7 @@ def main():
     training(model3, X_train, y_train, X_validate, y_validate)
     fim3 = time_ns()
     print("Modelo 3 ->", fim3 - fim2)
+
     print("Fim treino, zip zup")
 
     print("Tempo total ->", fim3 - inicio)
@@ -76,8 +76,7 @@ def main():
     modelos = [model1, model2, model3]
 
     for i in range(3):
-        with open(caminho_output / f"modelo{i + 1}", "wb") as pkl:
-            pickle.dump(modelos[i], pkl)
+        modelos[i].save(caminho_output / f"modelo{i + 1}.keras")
 
 
 if __name__ == "__main__":
