@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+from pathlib import Path
 
 import matplotlib
 
@@ -13,6 +14,8 @@ def load_images(image_paths: list[str], base_path: str, target_size=(64, 64)):
     images = []
     for file_path in image_paths:
         full_path = base_path + "/" + file_path
+        print(full_path)
+        assert Path(full_path).exists()
         img = cv.imread(full_path, cv.IMREAD_GRAYSCALE)  # Load as grayscale
         if img is not None:
             img = cv.resize(img, target_size)  # Resize the image to 64x64 pixels
@@ -20,8 +23,8 @@ def load_images(image_paths: list[str], base_path: str, target_size=(64, 64)):
         else:
             img = np.zeros(target_size)  # If the image cannot be loaded, return a blank image
 
-        plt.imshow(img, cmap="grey")
-        plt.show()
+        # plt.imshow(img, cmap="grey")
+        # plt.show()
         images.append(img)
     return np.array(images)
 

@@ -8,11 +8,11 @@ Peguntas:
  - Onde o nosso treinamento está influenciando no modelo? (Camadas congeladas) 
 
 - Benchmarks para diveros casos: (Lucas e Dogo)
-  manipular o número de camadas
-  manipular o número de neuronios
-  Método de convergencia (Adam, Gradiente)
-  Comparar modelo pré-treinado com treinado
-  Treinar modelo com menos imagens para depois usar para validação
+  - manipular o número de camadas
+  - manipular o número de neuronios
+  - Método de convergencia (Adam, Gradiente)
+  - Comparar modelo pré-treinado com treinado
+  - Treinar modelo com menos imagens para depois usar para validação
  
 - Comportamento mudando das dimensoes da imagem (Renan)
   - Mostrar de forma matricial

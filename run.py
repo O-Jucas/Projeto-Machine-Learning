@@ -25,7 +25,7 @@ def main():
     assert caminho_dataset.exists(), "Caminho para o csv \"caminho-master-doodle-dataframe.csv\" incorreto"
 
     caminho_pasta_imagens = Path(argv[2])
-    assert caminho_pasta_imagens.exists(), "Caminho para a pasta de imagens incorreto"
+    assert caminho_pasta_imagens.exists(), f"Caminho para a pasta de imagens incorreto\n{Path(argv[2])}"
 
     caminho_json = Path(argv[3])
     assert caminho_json.exists(), "Caminho para o json de palavras selecionadas incorreto"
