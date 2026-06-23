@@ -61,8 +61,8 @@ def montar_split_por_pasta(train_imgs, train_labels, val_imgs, val_labels, words
 modelo_treinado = 2
 
 # Selecione também qual benchmark deseja realizar, ou None para não realizar nenhum benchmark
-# Opções: None | "number_of_neurons"
-benchmark = "number_of_neurons"
+# Opções: None | "number_of_neurons" | "number_of_layers"
+benchmark = "number_of_layers"
 
 
 def run_benchmark_neuronios(X_train, y_train, X_validate, y_validate, classes, caminho_output):
@@ -161,52 +161,194 @@ def run_benchmark_neuronios(X_train, y_train, X_validate, y_validate, classes, c
 
     return df
 
+def run_benchmark_camadas(X_train, y_train, X_validate, y_validate, classes, caminho_output):
+    from sklearn.metrics import (
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score,
+    )
+    from Benchmarks.trn_numero_camadas import (
+        create_cnn_2_1024_2_blocos,
+        create_cnn_2_1024_3_blocos,
+        create_cnn_2_1024_4_blocos,
+        create_cnn_2_1024_3_blocos_1_Dense,
+        create_cnn_2_1024_3_blocos_3_Dense,
+        create_cnn_2_1024_3_blocos_4_Dense,
+    )
 
-def _salvar_graficos_comparativos(df, caminho_output):
-    xs = df["neurônios"].astype(str).tolist()
+    num_classes = len(classes)
+
+    # Subpastas: curvas/CSV em treinamento/, modelos salvos em modelos/
+    caminho_treinamento = caminho_output / "treinamento"
+    caminho_modelos = caminho_output / "modelos"
+    caminho_treinamento.mkdir(parents=True, exist_ok=True)
+    caminho_modelos.mkdir(parents=True, exist_ok=True)
+
+    variantes = [
+        ("2_blocos",          create_cnn_2_1024_2_blocos),
+        ("3_blocos",          create_cnn_2_1024_3_blocos),
+        ("4_blocos",          create_cnn_2_1024_4_blocos),
+        ("3_blocos_1_Dense",  create_cnn_2_1024_3_blocos_1_Dense),
+        ("3_blocos_3_Dense",  create_cnn_2_1024_3_blocos_3_Dense),
+        ("3_blocos_4_Dense",  create_cnn_2_1024_3_blocos_4_Dense),
+    ]
+
+    resultados = []
+
+    for nome, factory in variantes:
+        print(f"\n--- Benchmark Camadas | arquitetura = {nome} ---")
+        model = factory(input_shape=(64, 64, 1), num_classes=num_classes)
+
+        inicio = time_ns()
+        history = training_retorna_historico(model, X_train, y_train, X_validate, y_validate)
+        fim = time_ns()
+        tempo_ms = (fim - inicio) / 1e6
+
+        val_loss = min(history["val_loss"])
+        epocas   = len(history["val_accuracy"])
+
+        # Como EarlyStopping(restore_best_weights=True), o modelo guarda os melhores pesos.
+        # Avaliamos as predições no conjunto de validação para extrair as métricas.
+        probabilidades = model.predict(X_validate, verbose=0)
+        y_previsto = np.argmax(probabilidades, axis=1)
+        y_real     = np.argmax(y_validate, axis=1)
+
+        acc       = accuracy_score(y_real, y_previsto)
+        recall    = recall_score(y_real, y_previsto, average="macro", zero_division=0)
+        precisao  = precision_score(y_real, y_previsto, average="macro", zero_division=0)
+        f1        = f1_score(y_real, y_previsto, average="macro", zero_division=0)
+        # L1 / MAE: erro absoluto médio entre o vetor de probabilidades e o rótulo one-hot
+        l1_mae    = float(np.mean(np.abs(probabilidades - y_validate)))
+
+        resultados.append({
+            "camadas":       nome,
+            "val_accuracy":  round(acc, 4),
+            "sensibilidade": round(recall, 4),
+            "precisao":      round(precisao, 4),
+            "f1":            round(f1, 4),
+            "L1_mae":        round(l1_mae, 4),
+            "val_loss":      round(val_loss, 4),
+            "épocas":        epocas,
+            "tempo_s":       round(tempo_ms / 1000, 1),
+        })
+
+        # Salva o modelo + classes + histórico para validação posterior (predicao/metricas)
+        sufixo = f"camadas_{nome}"
+        model.save(caminho_modelos / f"modelo_{sufixo}.keras")
+        with open(caminho_modelos / f"classes_{sufixo}.json", "w") as f:
+            json.dump(classes, f)
+        with open(caminho_modelos / f"historico_{sufixo}.json", "w") as f:
+            json.dump(history, f)
+
+        analyze_training(history, caminho_treinamento, f"benchmark_camadas_{nome}")
+        print(f"  accuracy={acc:.4f}  sensibilidade={recall:.4f}  precisao={precisao:.4f}  "
+              f"f1={f1:.4f}  L1={l1_mae:.4f}  val_loss={val_loss:.4f}  épocas={epocas}  tempo={tempo_ms/1000:.1f}s")
+
+    df = pd.DataFrame(resultados)
+
+    caminho_csv = caminho_treinamento / "benchmark_camadas_modelo2.csv"
+    df.to_csv(caminho_csv, index=False)
+
+    print("\n" + "=" * 55)
+    print("RESULTADOS — Benchmark Modelo 2 (número de camadas)")
+    print("=" * 55)
+    print(df.to_string(index=False))
+    print(f"\nCSV salvo em: {caminho_csv}")
+
+    _graficos_por_eixo_camadas(df, caminho_treinamento)
+    print(f"Modelos salvos em: {caminho_modelos}")
+
+    return df
+
+
+def _graficos_por_eixo_camadas(df, caminho_output):
+    """Gera dois conjuntos de gráficos separados, um por eixo do estudo, para não
+    misturar variações de natureza diferente num mesmo gráfico:
+      - blocos convolucionais (mantendo 2 camadas Dense)
+      - camadas Dense (mantendo 3 blocos convolucionais)
+    O modelo `3_blocos` é o ponto comum aos dois eixos (3 blocos conv + 2 Dense)."""
+
+    # (nome_no_df, rótulo_limpo_no_gráfico) — a ordem da lista define a ordem no eixo X
+    grupo_conv = [
+        ("2_blocos", "2 blocos"),
+        ("3_blocos", "3 blocos"),
+        ("4_blocos", "4 blocos"),
+    ]
+    grupo_dense = [
+        ("3_blocos_1_Dense", "1 Dense"),
+        ("3_blocos",         "2 Dense"),
+        ("3_blocos_3_Dense", "3 Dense"),
+        ("3_blocos_4_Dense", "4 Dense"),
+    ]
+
+    eixos = [
+        (grupo_conv,  "Blocos convolucionais", "benchmark_camadas_blocosconv", "Número de Blocos Convolucionais"),
+        (grupo_dense, "Camadas Dense",         "benchmark_camadas_dense",      "Número de Camadas Dense"),
+    ]
+
+    for grupo, rotulo_x, prefixo, titulo in eixos:
+        ordem = [nome for nome, _ in grupo]
+        # Reordena as linhas do df na ordem do eixo e aplica os rótulos limpos
+        sub = df.set_index("camadas").loc[ordem].reset_index()
+        sub["eixo"] = [rotulo for _, rotulo in grupo]
+
+        _salvar_graficos_comparativos(
+            sub, caminho_output,
+            coluna_x="eixo",
+            rotulo_x=rotulo_x,
+            prefixo=prefixo,
+            titulo=titulo,
+        )
+
+def _salvar_graficos_comparativos(df, caminho_output, coluna_x="neurônios",
+                                  rotulo_x="Neurônios por camada Dense",
+                                  prefixo="benchmark_neuronios_modelo2",
+                                  titulo="Número de Neurônios"):
+    xs = df[coluna_x].astype(str).tolist()
 
     # Gráfico de val_accuracy
     fig, ax = plt.subplots(figsize=(7, 4))
     bars = ax.bar(xs, df["val_accuracy"], color="steelblue")
-    ax.set_xlabel("Neurônios por camada Dense")
+    ax.set_xlabel(rotulo_x)
     ax.set_ylabel("Val Accuracy (máximo)")
-    ax.set_title("Benchmark Modelo 2 — Número de Neurônios")
+    ax.set_title(f"Benchmark Modelo 2 — {titulo}")
     ax.set_ylim(0, 1.05)
     for bar, val in zip(bars, df["val_accuracy"]):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                 f"{val:.3f}", ha="center", va="bottom", fontsize=9)
     fig.tight_layout()
-    fig.savefig(caminho_output / "benchmark_neuronios_modelo2_accuracy.png", dpi=150)
+    fig.savefig(caminho_output / f"{prefixo}_accuracy.png", dpi=150)
     plt.close(fig)
 
     # Gráfico de tempo de treino
     fig, ax = plt.subplots(figsize=(7, 4))
     bars = ax.bar(xs, df["tempo_s"], color="coral")
-    ax.set_xlabel("Neurônios por camada Dense")
+    ax.set_xlabel(rotulo_x)
     ax.set_ylabel("Tempo de treino (s)")
     ax.set_title("Benchmark Modelo 2 — Tempo de Treinamento")
     for bar, val in zip(bars, df["tempo_s"]):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
                 f"{val:.1f}s", ha="center", va="bottom", fontsize=9)
     fig.tight_layout()
-    fig.savefig(caminho_output / "benchmark_neuronios_modelo2_tempo.png", dpi=150)
+    fig.savefig(caminho_output / f"{prefixo}_tempo.png", dpi=150)
     plt.close(fig)
 
     # Gráfico de val_loss
     fig, ax = plt.subplots(figsize=(7, 4))
     bars = ax.bar(xs, df["val_loss"], color="mediumseagreen")
-    ax.set_xlabel("Neurônios por camada Dense")
+    ax.set_xlabel(rotulo_x)
     ax.set_ylabel("Val Loss (mínimo)")
     ax.set_title("Benchmark Modelo 2 — Val Loss")
     for bar, val in zip(bars, df["val_loss"]):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.005,
                 f"{val:.3f}", ha="center", va="bottom", fontsize=9)
     fig.tight_layout()
-    fig.savefig(caminho_output / "benchmark_neuronios_modelo2_loss.png", dpi=150)
+    fig.savefig(caminho_output / f"{prefixo}_loss.png", dpi=150)
     plt.close(fig)
 
-    # Gráfico de linhas: evolução das métricas conforme aumenta o nº de neurônios
-    # (exatamente a pergunta do colega — "como se comporta acurácia, sensibilidade, etc")
+    # Gráfico de linhas: evolução das métricas conforme varia o eixo do benchmark
+    # (a pergunta do colega — "como se comporta acurácia, sensibilidade, etc")
     fig, ax = plt.subplots(figsize=(8, 5))
     for coluna, rotulo in [
         ("val_accuracy",  "Acurácia"),
@@ -215,27 +357,27 @@ def _salvar_graficos_comparativos(df, caminho_output):
         ("f1",            "F1-score"),
     ]:
         ax.plot(xs, df[coluna], marker="o", label=rotulo)
-    ax.set_xlabel("Neurônios por camada Dense")
+    ax.set_xlabel(rotulo_x)
     ax.set_ylabel("Valor da métrica")
-    ax.set_title("Benchmark Modelo 2 — Métricas vs Número de Neurônios")
+    ax.set_title(f"Benchmark Modelo 2 — Métricas vs {titulo}")
     ax.set_ylim(0, 1.05)
     ax.legend()
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(caminho_output / "benchmark_neuronios_modelo2_metricas.png", dpi=150)
+    fig.savefig(caminho_output / f"{prefixo}_metricas.png", dpi=150)
     plt.close(fig)
 
     # Gráfico de L1 (MAE) — quanto menor, melhor calibrado
     fig, ax = plt.subplots(figsize=(7, 4))
     bars = ax.bar(xs, df["L1_mae"], color="slateblue")
-    ax.set_xlabel("Neurônios por camada Dense")
+    ax.set_xlabel(rotulo_x)
     ax.set_ylabel("L1 / MAE das probabilidades")
     ax.set_title("Benchmark Modelo 2 — Erro L1 (MAE)")
     for bar, val in zip(bars, df["L1_mae"]):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.001,
                 f"{val:.3f}", ha="center", va="bottom", fontsize=9)
     fig.tight_layout()
-    fig.savefig(caminho_output / "benchmark_neuronios_modelo2_L1.png", dpi=150)
+    fig.savefig(caminho_output / f"{prefixo}_L1.png", dpi=150)
     plt.close(fig)
 
     print(f"Gráficos comparativos salvos em: {caminho_output}")
@@ -304,6 +446,11 @@ def main():
     if benchmark == "number_of_neurons" and modelo_treinado == 2:
         caminho_bench = Path("Benchmarks/neuronios")
         run_benchmark_neuronios(X_train, y_train, X_validate, y_validate, sorted(words_to_keep), caminho_bench)
+        return
+
+    if benchmark == "number_of_layers" and modelo_treinado == 2:
+        caminho_bench = Path("Benchmarks/camadas")
+        run_benchmark_camadas(X_train, y_train, X_validate, y_validate, sorted(words_to_keep), caminho_bench)
         return
 
     # ── Modo treino único ────────────────────────────────────────
