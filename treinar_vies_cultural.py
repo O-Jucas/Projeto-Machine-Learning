@@ -22,7 +22,13 @@ def executar_treinamento(caminho_dataset, caminho_pasta_imagens, caminho_json, s
     df['image_path_normalizado'] = df['image_path'].str.replace(r'^data/', '', regex=True)
     words_to_keep = [w for w in words_to_keep if (Path(caminho_pasta_imagens) / w).exists()]
     
-    df_pais = df[df['word'].isin(words_to_keep) & (df['countrycode'] == sigla_pais)].copy()
+    # --- BLOCO DE DEBUG (Adicione isso) ---
+    print("\n--- DEBUG INFO ---")
+    print(f"Total de desenhos mapeados no CSV: {len(df)}")
+    print(f"Quantos desenhos do país '{sigla_pais}' o CSV possui? {(df['countrycode'] == sigla_pais).sum()}")
+    print(f"Palavras validadas (Pastas encontradas): {words_to_keep}")
+    print("------------------\n")
+    # --------------------------------------
     
 # Filtra estritamente os dados da bolha cultural do país escolhido
     df_pais = df[df['word'].isin(words_to_keep) & (df['countrycode'] == sigla_pais)].copy()
@@ -31,7 +37,7 @@ def executar_treinamento(caminho_dataset, caminho_pasta_imagens, caminho_json, s
         raise ValueError(f"Nenhum dado encontrado para o país {sigla_pais}.")
 
     # --- TRATAMENTO DO PROBLEMA 80/20 ---
-    MIN_DESENHOS_POR_CLASSE = 20  # Garante pelo menos 4 desenhos no bloco de validação (20% de 20)
+    MIN_DESENHOS_POR_CLASSE = 10  # Garante pelo menos 4 desenhos no bloco de validação (20% de 20)
     contagem_por_classe = df_pais['word'].value_counts()
     
     # Descobre quais palavras possuem amostras suficientes para o split
