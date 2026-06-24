@@ -1,1 +1,7 @@
-["The Eiffel Tower", "ambulance", "barn", "cactus", "dolphin", "floor lamp", "harp", "moon", "penguin", "sink"]
+[
+  "power outlet", "mailbox", "fire hydrant", "school bus", 
+  "bread", "house", "barn", "church", 
+  "hospital", "ambulance", "police car", "toilet", 
+  "raccoon", "castle", "lantern", "coffee cup", 
+  "stove", "matches", "bed", "telephone"
+]
