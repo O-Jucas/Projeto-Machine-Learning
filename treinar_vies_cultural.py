@@ -37,7 +37,7 @@ def executar_treinamento(caminho_dataset, caminho_pasta_imagens, caminho_json, s
         raise ValueError(f"Nenhum dado encontrado para o país {sigla_pais}.")
 
     # --- TRATAMENTO DO PROBLEMA 80/20 ---
-    MIN_DESENHOS_POR_CLASSE = 10  # Garante pelo menos 4 desenhos no bloco de validação (20% de 20)
+    MIN_DESENHOS_POR_CLASSE = 10  # Garante pelo menos 4 desenhos no bloco de validação (20% de 10)
     contagem_por_classe = df_pais['word'].value_counts()
     
     # Descobre quais palavras possuem amostras suficientes para o split
