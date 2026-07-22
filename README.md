@@ -182,7 +182,7 @@ Projeto-Machine-Learning/
 
 ---
 
-## 🚀 Reprodutibilidade
+## Reprodutibilidade
 
 O repositório serve de registro dos experimentos da disciplina. Para reproduzi-los localmente (requer **Python 3.12**, ver `.python-version`):
 
@@ -224,9 +224,9 @@ Projeto em grupo. Papéis conforme a divisão do trabalho:
 | Integrante | Frente principal |
 |------------|------------------|
 | **Lucas Vargas** ([@O-Jucas](https://github.com/O-Jucas)) | Benchmarks: nº de camadas, neurônios, otimizadores e volume de dados |
-| **Diogo Lima** | Benchmarks e parte teórica |
-| **Renan Guedes** | Estudo do comportamento das dimensões da imagem (PCA) |
-| **Bruno Rodrigues** | Estudo de viés cultural (desenho × país) |
+| **Diogo Lima** ([@brunora16](https://github.com/dbclima)) | Benchmarks e parte teórica |
+| **Renan Guedes** ([@RenanMguedes](https://github.com/RenanMguedes))| Estudo do comportamento das dimensões da imagem (PCA) |
+| **Bruno Rodrigues** ([@dbclima](https://github.com/brunora16)) | Estudo de viés cultural (desenho × país) |
 | **Gabriela Vilar** | Questionamentos sobre o modelo (pré-treino, camadas congeladas) |
 
 ---
