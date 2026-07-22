@@ -1,3 +1,8 @@
 __pycache__/
 /output
 /data
+output/
+dados/
+
+Benchmarks/neuronios/modelos/
+Benchmarks/camadas/modelos/
