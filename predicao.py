@@ -7,9 +7,9 @@ from pathlib import Path
 from tensorflow.keras.models import load_model
 
 
-# python .\predicao.py "Benchmarks/camadas/modelos/modelo_camadas_3_blocos.keras" "C:\Users\lucas\OneDrive\Área de Trabalho\produtividade\ArqComp\arquivos machine learning\testes-criados\drums"
+# python .\predicao.py "Benchmarks/camadas/modelos/modelo_camadas_3_blocos.keras" "testes-criados/drums"
 
-# python .\predicao.py "Benchmarks/neuronios/modelos/modelo_neuronios_256.keras" "C:\Users\lucas\OneDrive\Área de Trabalho\produtividade\ArqComp\arquivos machine learning\testes-criados\Megaphone Re"
+# python .\predicao.py "Benchmarks/neuronios/modelos/modelo_neuronios_256.keras" "testes-criados/Megaphone Re"
 
 # python .\predicao.py "Benchmarks/camadas/modelos/neuronios/modelos/modelo_neuronios_256.keras" "testes-criados/Piano.png"
 

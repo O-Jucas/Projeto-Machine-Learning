@@ -50,7 +50,8 @@ def main():
         lista_palavras = json.load(js)
         print(lista_palavras)
 
-    caminho_desenhos = Path("/home/dbclima/Repositories/dbclima/ufrj/2026_1/Aprendizado_de_Maquina/trabalho_final/archive/doodle/data")
+    # Ajuste para o caminho local do dataset Quick, Draw! (pasta "doodle/data")
+    caminho_desenhos = Path("./archive/doodle/data")
     separar_treino_teste(
         caminho_desenhos,
         Path("./data/"),
